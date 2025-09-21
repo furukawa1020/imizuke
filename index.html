@@ -322,6 +322,124 @@
             display: none;
         }
 
+        .share-section {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .share-btn.twitter {
+            background: linear-gradient(135deg, #1da1f2, #0d8bd9);
+        }
+
+        .share-btn.line {
+            background: linear-gradient(135deg, #00c300, #00a000);
+        }
+
+        .share-btn.facebook {
+            background: linear-gradient(135deg, #4267b2, #365899);
+        }
+
+        .share-btn.copy {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+
+        .share-text-preview {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .share-text-edit {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: vertical;
+        }
+
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .share-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .share-modal h3 {
+            margin-top: 0;
+            text-align: center;
+            color: #333;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -514,6 +632,29 @@
                     <h3>今回の記録</h3>
                     <p id="solo-summary"></p>
                 </div>
+                
+                <div class="share-section">
+                    <h3>📱 記録をシェアする</h3>
+                    <p>今日の気づきを誰かとシェアしてみませんか？</p>
+                    <div class="share-buttons">
+                        <button class="share-btn twitter" onclick="shareToTwitter()">
+                            🐦 Twitter
+                        </button>
+                        <button class="share-btn line" onclick="shareToLine()">
+                            💬 LINE
+                        </button>
+                        <button class="share-btn facebook" onclick="shareToFacebook()">
+                            📘 Facebook
+                        </button>
+                        <button class="share-btn copy" onclick="copyShareText()">
+                            📋 コピー
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="customizeShareMessage()" style="margin-top: 15px;">
+                        ✏️ シェアメッセージをカスタマイズ
+                    </button>
+                </div>
+                
                 <button class="btn" onclick="newEntry()">新しい記録をつける</button>
             </div>
 
@@ -525,6 +666,28 @@
                 <div class="your-position">
                     <h3>📍 あなたの意味づけ</h3>
                     <p id="your-meaning"></p>
+                </div>
+
+                <div class="share-section">
+                    <h3>📱 体験をシェアする</h3>
+                    <p>あなたの意味づけを友人や家族とシェアしてみませんか？</p>
+                    <div class="share-buttons">
+                        <button class="share-btn twitter" onclick="shareToTwitter()">
+                            🐦 Twitter
+                        </button>
+                        <button class="share-btn line" onclick="shareToLine()">
+                            💬 LINE
+                        </button>
+                        <button class="share-btn facebook" onclick="shareToFacebook()">
+                            📘 Facebook
+                        </button>
+                        <button class="share-btn copy" onclick="copyShareText()">
+                            📋 コピー
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="customizeShareMessage()" style="margin-top: 15px;">
+                        ✏️ シェアメッセージをカスタマイズ
+                    </button>
                 </div>
 
                 <div class="chart-container">
@@ -552,6 +715,32 @@
         </div>
     </div>
 
+    <!-- シェアカスタマイズモーダル -->
+    <div id="share-modal" class="share-modal">
+        <div class="share-modal-content">
+            <span class="close-modal" onclick="closeShareModal()">&times;</span>
+            <h3>📝 シェアメッセージをカスタマイズ</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600;">プレビュー</label>
+                <div id="share-preview" class="share-text-preview"></div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="custom-share-text" style="display: block; margin-bottom: 10px; font-weight: 600;">カスタムメッセージ</label>
+                <textarea id="custom-share-text" class="share-text-edit" placeholder="あなたのメッセージを入力してください..." oninput="updateLivePreview()"></textarea>
+                <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                    <span id="char-count">0</span>/280文字 | #ことイミ日記 が自動で追加されます
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="btn" onclick="updateShareText()">メッセージを更新</button>
+                <button class="btn btn-secondary" onclick="resetShareText()">デフォルトに戻す</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // アプリケーション状態
         let appState = {
@@ -566,7 +755,8 @@
             meaningTags: [],
             responseTime: 0,
             sawAltMeanings: false,
-            currentRecordId: null
+            currentRecordId: null,
+            customShareText: null
         };
 
         // 初期化
@@ -1130,6 +1320,169 @@
             });
             document.getElementById(pageId).classList.add('active');
         }
+
+        // === SNSシェア機能 ===
+
+        function generateShareText() {
+            // シェア用テキストを生成
+            if (appState.customShareText) {
+                return appState.customShareText;
+            }
+
+            const eventName = getEventName(appState.eventCategory);
+            const meaningText = appState.meaningText;
+            const tags = appState.meaningTags;
+            
+            // 基本的なシェアテキスト
+            let shareText = `今日の気づき✨\n\n`;
+            shareText += `出来事: ${eventName}\n`;
+            shareText += `意味づけ: ${meaningText}\n\n`;
+            
+            // タグがある場合は追加
+            if (tags && tags.length > 0) {
+                shareText += `💭 ${tags.join('・')}\n\n`;
+            }
+            
+            // モードに応じたメッセージ
+            if (appState.mode === 'social') {
+                shareText += `他の人の多様な意味づけも見ることができて、新しい視点を得られました👀\n\n`;
+            } else {
+                shareText += `自分なりの意味づけを記録して、内省を深めました🤔\n\n`;
+            }
+            
+            // ハッシュタグ
+            const hashtags = [
+                '#ことイミ日記'
+            ];
+            
+            shareText += hashtags.join(' ');
+            
+            return shareText;
+        }
+
+        function shareToTwitter() {
+            const text = generateShareText();
+            const encodedText = encodeURIComponent(text);
+            const url = `https://twitter.com/intent/tweet?text=${encodedText}`;
+            
+            if (confirm('Twitterでシェアしますか？\n\n' + text)) {
+                window.open(url, '_blank', 'width=600,height=400');
+            }
+        }
+
+        function shareToLine() {
+            const text = generateShareText();
+            const encodedText = encodeURIComponent(text);
+            const url = `https://social-plugins.line.me/lineit/share?text=${encodedText}`;
+            
+            if (confirm('LINEでシェアしますか？\n\n' + text)) {
+                window.open(url, '_blank', 'width=600,height=400');
+            }
+        }
+
+        function shareToFacebook() {
+            const text = generateShareText();
+            const encodedText = encodeURIComponent(text);
+            const url = `https://www.facebook.com/sharer/sharer.php?quote=${encodedText}`;
+            
+            if (confirm('Facebookでシェアしますか？\n\n' + text)) {
+                window.open(url, '_blank', 'width=600,height=400');
+            }
+        }
+
+        async function copyShareText() {
+            const text = generateShareText();
+            
+            try {
+                await navigator.clipboard.writeText(text);
+                showSuccessMessage('シェアテキストをクリップボードにコピーしました！');
+            } catch (err) {
+                // フォールバック: テキストエリアを作成してコピー
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showSuccessMessage('シェアテキストをコピーしました！');
+            }
+        }
+
+        function customizeShareMessage() {
+            const modal = document.getElementById('share-modal');
+            const preview = document.getElementById('share-preview');
+            const customText = document.getElementById('custom-share-text');
+            
+            // プレビューを更新
+            updateSharePreview();
+            
+            // カスタムテキストを初期化
+            customText.value = appState.customShareText || '';
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').style.display = 'none';
+        }
+
+        function updateSharePreview() {
+            const preview = document.getElementById('share-preview');
+            const shareText = generateShareText();
+            preview.textContent = shareText;
+        }
+
+        function updateShareText() {
+            const customText = document.getElementById('custom-share-text').value.trim();
+            
+            if (customText) {
+                appState.customShareText = customText;
+                showSuccessMessage('シェアメッセージが更新されました！');
+            } else {
+                appState.customShareText = null;
+                showSuccessMessage('デフォルトメッセージに戻しました！');
+            }
+            
+            updateSharePreview();
+            closeShareModal();
+        }
+
+        function resetShareText() {
+            appState.customShareText = null;
+            document.getElementById('custom-share-text').value = '';
+            updateSharePreview();
+            showSuccessMessage('デフォルトメッセージに戻しました！');
+        }
+
+        function updateLivePreview() {
+            const customText = document.getElementById('custom-share-text').value;
+            const charCount = document.getElementById('char-count');
+            const preview = document.getElementById('share-preview');
+            
+            // 文字数カウント
+            charCount.textContent = customText.length;
+            charCount.style.color = customText.length > 280 ? '#e74c3c' : '#666';
+            
+            // プレビュー更新
+            if (customText.trim()) {
+                const hashtags = [
+                    '#ことイミ日記'
+                ];
+                
+                const previewText = customText + '\n\n' + hashtags.join(' ');
+                preview.textContent = previewText;
+            } else {
+                updateSharePreview();
+            }
+        }
+
+        // モーダル外クリックで閉じる
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('share-modal');
+            if (event.target === modal) {
+                closeShareModal();
+            }
+        });
     </script>
 </body>
 </html>
