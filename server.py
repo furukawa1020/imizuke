@@ -144,9 +144,20 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
     def send_cors_headers(self):
         """CORS ヘッダーを送信"""
         self.send_response(200)
-        # 本番環境では特定ドメインのみ許可
-        allowed_origin = os.getenv('ALLOWED_ORIGIN', 'http://localhost:8000')
-        self.send_header('Access-Control-Allow-Origin', allowed_origin)
+        # Netlifyドメインからのアクセスを許可
+        origin = self.headers.get('Origin')
+        allowed_origins = [
+            'https://kotoimidiary.netlify.app',
+            'http://localhost:8000',
+            'http://127.0.0.1:8000'
+        ]
+        
+        if origin in allowed_origins:
+            self.send_header('Access-Control-Allow-Origin', origin)
+        else:
+            # デフォルトでNetlifyを許可
+            self.send_header('Access-Control-Allow-Origin', 'https://kotoimidiary.netlify.app')
+            
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -597,8 +608,8 @@ if __name__ == '__main__':
     import sys
     
     # コマンドライン引数の処理
-    port = 8000
-    host = 'localhost'
+    port = int(os.environ.get('PORT', 8000))  # Railway用の環境変数対応
+    host = '0.0.0.0'  # Railway用にすべてのアドレスでリッスン
     
     if len(sys.argv) > 1:
         try:

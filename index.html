@@ -846,6 +846,11 @@
     </div>
 
     <script>
+        // API設定 - Railway デプロイ後にURLを更新
+        const API_BASE_URL = window.location.hostname === 'kotoimidiary.netlify.app' 
+            ? 'https://your-railway-app.railway.app'  // 後で実際のRailway URLに置き換え
+            : '';  // ローカル開発時は相対パス
+
         // アプリケーション状態
         let appState = {
             consent: null,
@@ -1146,7 +1151,7 @@
             submitButton.disabled = true;
 
             try {
-                const response = await fetch('/submit', {
+                const response = await fetch(`${API_BASE_URL}/submit`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1246,7 +1251,7 @@
 
         async function fetchDistribution(eventTag) {
             try {
-                const response = await fetch(`/fetch?event_tag=${eventTag}`);
+                const response = await fetch(`${API_BASE_URL}/fetch?event_tag=${eventTag}`);
                 if (response.ok) {
                     return await response.json();
                 }
@@ -1329,7 +1334,7 @@
 
         async function submitRevisedToServer(revisionData) {
             try {
-                const response = await fetch('/submit', {
+                const response = await fetch(`${API_BASE_URL}/submit`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1352,7 +1357,7 @@
         function updateSawAltMeaningsFlag() {
             if (appState.consent && appState.currentRecordId) {
                 // サーバーに他者データを見たことを通知
-                fetch('/update_saw_alt_meanings', {
+                fetch(`${API_BASE_URL}/update_saw_alt_meanings`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

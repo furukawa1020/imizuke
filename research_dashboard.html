@@ -188,8 +188,13 @@
     </div>
 
     <script>
+        // API設定 - Railway デプロイ後にURLを更新
+        const API_BASE_URL = window.location.hostname === 'kotoimidiary.netlify.app' 
+            ? 'https://your-railway-app.railway.app'  // 後で実際のRailway URLに置き換え
+            : '';  // ローカル開発時は相対パス
+
         async function callResearchAPI(type, eventTag = null) {
-            const url = new URL('/research', window.location.origin);
+            const url = new URL('/research', API_BASE_URL || window.location.origin);
             url.searchParams.append('type', type);
             if (eventTag) {
                 url.searchParams.append('event_tag', eventTag);
