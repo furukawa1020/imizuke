@@ -9,6 +9,8 @@ import sqlite3
 import hashlib
 import datetime
 import urllib.parse
+import html
+import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import os
@@ -17,8 +19,76 @@ import time
 
 class MeaningDiversityServer(BaseHTTPRequestHandler):
     
+    # レート制限用のクラス変数
+    _request_counts = {}
+    _blocked_ips = {}
+    _last_cleanup = time.time()
+    
+    # 設定値
+    RATE_LIMIT_REQUESTS = 30  # 1分間あたりの最大リクエスト数
+    RATE_LIMIT_WINDOW = 60    # 時間窓（秒）
+    RATE_LIMIT_BLOCK_TIME = 300  # ブロック時間（秒）
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+    
+    def check_rate_limit(self):
+        """レート制限のチェック"""
+        client_ip = self.client_address[0]
+        current_time = time.time()
+        
+        # 定期的にカウンターをクリーンアップ
+        if current_time - self._last_cleanup > self.RATE_LIMIT_WINDOW:
+            self._cleanup_rate_limit_data()
+            self._last_cleanup = current_time
+        
+        # ブロックされたIPかチェック
+        if client_ip in self._blocked_ips:
+            if current_time - self._blocked_ips[client_ip] < self.RATE_LIMIT_BLOCK_TIME:
+                return False
+            else:
+                # ブロック期間が過ぎたので解除
+                del self._blocked_ips[client_ip]
+        
+        # リクエスト数をカウント
+        if client_ip not in self._request_counts:
+            self._request_counts[client_ip] = []
+        
+        # 古いリクエストを削除
+        cutoff_time = current_time - self.RATE_LIMIT_WINDOW
+        self._request_counts[client_ip] = [
+            req_time for req_time in self._request_counts[client_ip] 
+            if req_time > cutoff_time
+        ]
+        
+        # リクエスト制限チェック
+        if len(self._request_counts[client_ip]) >= self.RATE_LIMIT_REQUESTS:
+            # IPをブロック
+            self._blocked_ips[client_ip] = current_time
+            return False
+        
+        # リクエストを記録
+        self._request_counts[client_ip].append(current_time)
+        return True
+    
+    def _cleanup_rate_limit_data(self):
+        """古いレート制限データをクリーンアップ"""
+        current_time = time.time()
+        cutoff_time = current_time - self.RATE_LIMIT_WINDOW
+        
+        # 古いリクエストカウントを削除
+        for ip in list(self._request_counts.keys()):
+            self._request_counts[ip] = [
+                req_time for req_time in self._request_counts[ip] 
+                if req_time > cutoff_time
+            ]
+            if not self._request_counts[ip]:
+                del self._request_counts[ip]
+        
+        # 期限切れのブロックを削除
+        for ip in list(self._blocked_ips.keys()):
+            if current_time - self._blocked_ips[ip] >= self.RATE_LIMIT_BLOCK_TIME:
+                del self._blocked_ips[ip]
     
     def do_GET(self):
         """GET リクエストの処理"""
@@ -48,6 +118,11 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
     
     def do_POST(self):
         """POST リクエストの処理"""
+        # レート制限チェック
+        if not self.check_rate_limit():
+            self.send_error(429, 'Too Many Requests')
+            return
+        
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
@@ -69,10 +144,25 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
     def send_cors_headers(self):
         """CORS ヘッダーを送信"""
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
+        # 本番環境では特定ドメインのみ許可
+        allowed_origin = os.getenv('ALLOWED_ORIGIN', 'http://localhost:8000')
+        self.send_header('Access-Control-Allow-Origin', allowed_origin)
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.send_header('Content-Type', 'application/json; charset=utf-8')
+        
+        # セキュリティヘッダーの追加
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
+        self.send_header('X-XSS-Protection', '1; mode=block')
+        self.send_header('Referrer-Policy', 'strict-origin-when-cross-origin')
+        self.send_header('Content-Security-Policy', 
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "connect-src 'self'"
+        )
     
     def serve_static_file(self, filename, content_type):
         """静的ファイルを提供"""
@@ -198,16 +288,56 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
             print(f"Fetch error: {e}")
             self.send_error(500, 'Internal server error')
     
+    def sanitize_input(self, text):
+        """入力値のサニタイゼーション"""
+        if not isinstance(text, str):
+            return str(text)
+        
+        # HTML エスケープ
+        sanitized = html.escape(text)
+        
+        # 危険なスクリプトタグを除去
+        sanitized = re.sub(r'<script[^>]*>.*?</script>', '', sanitized, flags=re.DOTALL | re.IGNORECASE)
+        
+        # その他の危険なタグを除去
+        dangerous_tags = ['iframe', 'object', 'embed', 'form', 'input', 'button']
+        for tag in dangerous_tags:
+            sanitized = re.sub(f'<{tag}[^>]*>.*?</{tag}>', '', sanitized, flags=re.DOTALL | re.IGNORECASE)
+            sanitized = re.sub(f'<{tag}[^>]*/?>', '', sanitized, flags=re.IGNORECASE)
+        
+        # JavaScript プロトコルを除去
+        sanitized = re.sub(r'javascript:', '', sanitized, flags=re.IGNORECASE)
+        
+        # 長すぎる入力を制限（DoS攻撃対策）
+        if len(sanitized) > 10000:
+            sanitized = sanitized[:10000]
+        
+        return sanitized.strip()
+    
     def validate_submission_data(self, data):
-        """送信データのバリデーション"""
+        """送信データのバリデーション（強化版）"""
         required_fields = [
             'user_id_hash', 'consent', 'mode', 'event_tag', 
             'meaning_text', 'rt_ms'
         ]
         
+        # 必須フィールドの存在確認
         for field in required_fields:
             if field not in data:
                 return False
+        
+        # データ型の検証
+        if not isinstance(data['consent'], bool):
+            return False
+        
+        if not isinstance(data['rt_ms'], int) or data['rt_ms'] < 0:
+            return False
+        
+        # テキストフィールドのサニタイゼーション
+        text_fields = ['event_text', 'meaning_text', 'meaning_tag', 'user_id_hash', 'event_tag']
+        for field in text_fields:
+            if field in data and data[field]:
+                data[field] = self.sanitize_input(data[field])
         
         # 意味づけテキストの長さチェック
         if len(data['meaning_text'].strip()) < 5:
@@ -215,6 +345,28 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
         
         # モードの値チェック
         if data['mode'] not in ['solo', 'social']:
+            return False
+        
+        # event_tag の検証（許可されたタグのみ）
+        allowed_event_tags = [
+            'work_late', 'work_praised', 'work_failed', 'work_success', 'work_conflict',
+            'relationship_fight', 'relationship_support', 'relationship_betrayal', 
+            'relationship_love', 'relationship_breakup',
+            'health_sick', 'health_injury', 'health_recovery', 'health_tired',
+            'money_loss', 'money_gain', 'money_debt', 'money_purchase',
+            'weather_rain', 'weather_storm', 'weather_sunny', 'weather_cold',
+            'accident_minor', 'accident_loss', 'accident_broken', 'accident_delay',
+            'achievement_goal', 'achievement_recognition', 'achievement_skill',
+            'loss_opportunity', 'loss_mistake', 'loss_rejection',
+            'surprise_news', 'surprise_meeting', 'surprise_discovery',
+            'other'
+        ]
+        
+        if data['event_tag'] not in allowed_event_tags:
+            return False
+        
+        # user_id_hash の形式確認
+        if not re.match(r'^anon_[a-z0-9_]+$', data['user_id_hash']):
             return False
         
         return True
