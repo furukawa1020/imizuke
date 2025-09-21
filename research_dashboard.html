@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ことイミ日記 - 研究者向け分析ダッシュボード</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .analysis-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        select, button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .results {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            margin-top: 15px;
+        }
+        
+        .metric {
+            display: inline-block;
+            margin: 10px 15px 10px 0;
+            padding: 10px 15px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            border-left: 3px solid #e74c3c;
+        }
+        
+        .metric-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .metric-value {
+            font-size: 1.2em;
+            color: #e74c3c;
+        }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 ことイミ日記 - 研究分析ダッシュボード</h1>
+        <p>意味づけの多様性と認知パターンを分析するための研究ツール</p>
+        
+        <!-- 多様性指標分析 -->
+        <div class="analysis-section">
+            <h2>📊 意味づけの多様性分析</h2>
+            <div class="controls">
+                <select id="diversity-event-tag">
+                    <option value="">全体統計</option>
+                    <option value="work_late">遅刻した</option>
+                    <option value="work_praised">褒められた</option>
+                    <option value="work_failed">仕事で失敗した</option>
+                    <option value="relationship_fight">ケンカした</option>
+                    <option value="weather_rain">雨に降られた</option>
+                    <option value="accident_minor">軽い事故</option>
+                    <option value="achievement_goal">目標達成</option>
+                </select>
+                <button onclick="analyzeDiversity()">多様性分析実行</button>
+            </div>
+            <div id="diversity-results" class="results" style="display: none;">
+                <div id="diversity-metrics"></div>
+                <pre id="diversity-json"></pre>
+            </div>
+        </div>
+        
+        <!-- 認知パターン比較 -->
+        <div class="analysis-section">
+            <h2>⚖️ 利用モード別認知パターン比較</h2>
+            <div class="controls">
+                <select id="mode-event-tag">
+                    <option value="">全体比較</option>
+                    <option value="work_late">遅刻した</option>
+                    <option value="work_praised">褒められた</option>
+                    <option value="weather_rain">雨に降られた</option>
+                </select>
+                <button onclick="analyzeModeComparison()">モード比較実行</button>
+            </div>
+            <div id="mode-results" class="results" style="display: none;">
+                <div id="mode-metrics"></div>
+                <pre id="mode-json"></pre>
+            </div>
+        </div>
+        
+        <!-- 意味づけの変化分析 -->
+        <div class="analysis-section">
+            <h2>🔄 社会的情報提示による認知変化分析</h2>
+            <div class="controls">
+                <select id="revision-event-tag">
+                    <option value="">全体統計</option>
+                    <option value="work_late">遅刻した</option>
+                    <option value="relationship_fight">ケンカした</option>
+                </select>
+                <button onclick="analyzeRevisionImpact()">変化分析実行</button>
+            </div>
+            <div id="revision-results" class="results" style="display: none;">
+                <div id="revision-metrics"></div>
+                <pre id="revision-json"></pre>
+            </div>
+        </div>
+        
+        <!-- 包括レポート -->
+        <div class="analysis-section">
+            <h2>📈 包括的分析レポート</h2>
+            <div class="controls">
+                <button onclick="generateComprehensiveReport()">包括レポート生成</button>
+            </div>
+            <div id="comprehensive-results" class="results" style="display: none;">
+                <pre id="comprehensive-json"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function callResearchAPI(type, eventTag = null) {
+            const url = new URL('/research', window.location.origin);
+            url.searchParams.append('type', type);
+            if (eventTag) {
+                url.searchParams.append('event_tag', eventTag);
+            }
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+        
+        function showMetrics(containerId, data) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (data.entropy_text !== undefined) {
+                container.innerHTML += `
+                    <div class="metric">
+                        <div class="metric-label">エントロピー H(E) - テキスト</div>
+                        <div class="metric-value">${data.entropy_text.toFixed(3)}</div>
+                    </div>
+                `;
+            }
+            
+            if (data.entropy_tags !== undefined) {
+                container.innerHTML += `
+                    <div class="metric">
+                        <div class="metric-label">エントロピー H(E) - タグ</div>
+                        <div class="metric-value">${data.entropy_tags.toFixed(3)}</div>
+                    </div>
+                `;
+            }
+            
+            if (data.semantic_distance_avg !== undefined) {
+                container.innerHTML += `
+                    <div class="metric">
+                        <div class="metric-label">意味距離平均</div>
+                        <div class="metric-value">${data.semantic_distance_avg.toFixed(3)}</div>
+                    </div>
+                `;
+            }
+            
+            if (data.consensus_rate !== undefined) {
+                container.innerHTML += `
+                    <div class="metric">
+                        <div class="metric-label">合意率 max p(M_i|E)</div>
+                        <div class="metric-value">${(data.consensus_rate * 100).toFixed(1)}%</div>
+                    </div>
+                `;
+            }
+            
+            if (data.total_entries !== undefined) {
+                container.innerHTML += `
+                    <div class="metric">
+                        <div class="metric-label">データ数</div>
+                        <div class="metric-value">${data.total_entries}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function analyzeDiversity() {
+            const eventTag = document.getElementById('diversity-event-tag').value || null;
+            const resultsDiv = document.getElementById('diversity-results');
+            const metricsDiv = document.getElementById('diversity-metrics');
+            const jsonPre = document.getElementById('diversity-json');
+            
+            try {
+                resultsDiv.style.display = 'block';
+                metricsDiv.innerHTML = '<div class="loading">分析中...</div>';
+                jsonPre.textContent = '';
+                
+                const data = await callResearchAPI('diversity', eventTag);
+                
+                showMetrics('diversity-metrics', data);
+                jsonPre.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                metricsDiv.innerHTML = `<div class="error">エラー: ${error.message}</div>`;
+                jsonPre.textContent = '';
+            }
+        }
+        
+        async function analyzeModeComparison() {
+            const eventTag = document.getElementById('mode-event-tag').value || null;
+            const resultsDiv = document.getElementById('mode-results');
+            const metricsDiv = document.getElementById('mode-metrics');
+            const jsonPre = document.getElementById('mode-json');
+            
+            try {
+                resultsDiv.style.display = 'block';
+                metricsDiv.innerHTML = '<div class="loading">分析中...</div>';
+                jsonPre.textContent = '';
+                
+                const data = await callResearchAPI('mode_comparison', eventTag);
+                
+                // Solo/Social比較メトリクス表示
+                metricsDiv.innerHTML = `
+                    <h4>Solo モード</h4>
+                    <div style="margin-left: 20px;">
+                        <div class="metric">
+                            <div class="metric-label">データ数</div>
+                            <div class="metric-value">${data.solo.count}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">エントロピー(テキスト)</div>
+                            <div class="metric-value">${data.solo.entropy_text.toFixed(3)}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">合意率</div>
+                            <div class="metric-value">${(data.solo.consensus_rate * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    
+                    <h4>Social モード</h4>
+                    <div style="margin-left: 20px;">
+                        <div class="metric">
+                            <div class="metric-label">データ数</div>
+                            <div class="metric-value">${data.social.count}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">エントロピー(テキスト)</div>
+                            <div class="metric-value">${data.social.entropy_text.toFixed(3)}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">合意率</div>
+                            <div class="metric-value">${(data.social.consensus_rate * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    
+                    <h4>差分</h4>
+                    <div style="margin-left: 20px;">
+                        <div class="metric">
+                            <div class="metric-label">エントロピー差分</div>
+                            <div class="metric-value">${data.differences.entropy_text_diff.toFixed(3)}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">合意率差分</div>
+                            <div class="metric-value">${(data.differences.consensus_rate_diff * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `;
+                
+                jsonPre.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                metricsDiv.innerHTML = `<div class="error">エラー: ${error.message}</div>`;
+                jsonPre.textContent = '';
+            }
+        }
+        
+        async function analyzeRevisionImpact() {
+            const eventTag = document.getElementById('revision-event-tag').value || null;
+            const resultsDiv = document.getElementById('revision-results');
+            const metricsDiv = document.getElementById('revision-metrics');
+            const jsonPre = document.getElementById('revision-json');
+            
+            try {
+                resultsDiv.style.display = 'block';
+                metricsDiv.innerHTML = '<div class="loading">分析中...</div>';
+                jsonPre.textContent = '';
+                
+                const data = await callResearchAPI('revision_impact', eventTag);
+                
+                metricsDiv.innerHTML = `
+                    <div class="metric">
+                        <div class="metric-label">他者データ閲覧者数</div>
+                        <div class="metric-value">${data.total_saw_alt_meanings}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">修正者数</div>
+                        <div class="metric-value">${data.changed_after_view_count}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">修正率</div>
+                        <div class="metric-value">${(data.change_rate * 100).toFixed(1)}%</div>
+                    </div>
+                `;
+                
+                jsonPre.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                metricsDiv.innerHTML = `<div class="error">エラー: ${error.message}</div>`;
+                jsonPre.textContent = '';
+            }
+        }
+        
+        async function generateComprehensiveReport() {
+            const resultsDiv = document.getElementById('comprehensive-results');
+            const jsonPre = document.getElementById('comprehensive-json');
+            
+            try {
+                resultsDiv.style.display = 'block';
+                jsonPre.textContent = '包括レポート生成中...';
+                
+                const data = await callResearchAPI('comprehensive');
+                jsonPre.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                jsonPre.textContent = `エラー: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
