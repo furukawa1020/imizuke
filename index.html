@@ -440,6 +440,68 @@
             color: #333;
         }
 
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(5px);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .settings-summary {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .change-settings-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .change-settings-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -463,6 +525,16 @@
     <div class="container">
         <!-- 同意・モード選択画面 -->
         <div class="page active" id="consent-page">
+            <div class="navigation-controls">
+                <button class="nav-btn" disabled>
+                    ← 戻る
+                </button>
+                <span style="color: white; font-size: 0.9rem;">設定</span>
+                <button class="nav-btn" disabled style="opacity: 0;">
+                    次へ →
+                </button>
+            </div>
+
             <h1>ことイミ日記</h1>
             <p class="subtitle">出来事の意味づけを記録し、多様性を探求するツールです</p>
             
@@ -515,6 +587,21 @@
 
         <!-- 入力画面 -->
         <div class="page" id="input-page">
+            <div class="navigation-controls">
+                <button class="nav-btn" onclick="goBackToSettings()" id="back-to-settings-btn">
+                    ← 設定に戻る
+                </button>
+                <span style="color: white; font-size: 0.9rem;">記録</span>
+                <button class="nav-btn" disabled style="opacity: 0;">
+                    次へ →
+                </button>
+            </div>
+
+            <div class="settings-summary" id="settings-summary">
+                <span id="current-settings-text"></span>
+                <button class="change-settings-btn" onclick="changeSettings()">変更</button>
+            </div>
+
             <div class="progress-bar">
                 <div class="progress-fill" id="progress-fill" style="width: 50%"></div>
             </div>
@@ -597,6 +684,13 @@
 
             <!-- Step 2: 意味づけ入力 -->
             <div id="step2" class="step" style="display: none;">
+                <div class="navigation-controls" style="margin-bottom: 15px;">
+                    <button class="nav-btn" onclick="prevStep()" style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.5); color: #667eea;">
+                        ← Step 1に戻る
+                    </button>
+                    <span style="color: #667eea; font-size: 0.9rem;">Step 2 / 2</span>
+                    <div style="opacity: 0;">次へ</div>
+                </div>
                 <div class="form-group">
                     <label for="meaning-text">この出来事をどう意味づけしますか？ *</label>
                     <textarea id="meaning-text" placeholder="この出来事があなたにとって何を意味するか、どのように感じたかを記録してください。" required></textarea>
@@ -624,6 +718,16 @@
 
         <!-- フィードバック画面 -->
         <div class="page" id="feedback-page">
+            <div class="navigation-controls">
+                <button class="nav-btn" onclick="goBackToInput()" style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.5); color: #667eea;">
+                    ← 記録に戻る
+                </button>
+                <span style="color: white; font-size: 0.9rem;">完了</span>
+                <button class="nav-btn" onclick="changeSettings()" style="background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.5); color: white;">
+                    設定変更 ⚙️
+                </button>
+            </div>
+
             <!-- Solo用 -->
             <div id="solo-feedback" style="display: none;">
                 <h2>✅ 記録が完了しました</h2>
@@ -770,16 +874,26 @@
             appState.userId = localStorage.getItem('kotoimiUserId') || generateUserId();
             localStorage.setItem('kotoimiUserId', appState.userId);
             
-            // 保存されている設定の読み込み
+            // 保存されている設定の読み込み（但し自動遷移はしない）
             const savedConsent = localStorage.getItem('kotoimiConsent');
             const savedMode = localStorage.getItem('kotoimiMode');
             
             if (savedConsent && savedMode) {
                 appState.consent = savedConsent === 'true';
                 appState.mode = savedMode;
-                // 設定済みの場合は直接入力画面へ
-                showPage('input-page');
-                resetInputForm();
+                
+                // 設定画面に前回の選択を反映
+                const consentRadio = document.querySelector(`input[name="consent"][value="${savedConsent}"]`);
+                const modeRadio = document.querySelector(`input[name="mode"][value="${savedMode}"]`);
+                
+                if (consentRadio) {
+                    consentRadio.checked = true;
+                    consentRadio.closest('.radio-option').classList.add('selected');
+                }
+                if (modeRadio) {
+                    modeRadio.checked = true;
+                    modeRadio.closest('.radio-option').classList.add('selected');
+                }
             }
         }
 
@@ -838,6 +952,44 @@
 
             showPage('input-page');
             resetInputForm();
+            updateSettingsSummary();
+        }
+
+        function updateSettingsSummary() {
+            const summaryText = document.getElementById('current-settings-text');
+            if (summaryText) {
+                const consentText = appState.consent ? '研究に協力' : '個人利用のみ';
+                const modeText = appState.mode === 'solo' ? 'Soloモード' : 'Socialモード';
+                summaryText.textContent = `${consentText} | ${modeText}`;
+            }
+        }
+
+        function goBackToSettings() {
+            if (confirm('設定画面に戻りますか？入力中のデータは失われます。')) {
+                showPage('consent-page');
+                // 入力データをクリア
+                document.getElementById('event-category').value = '';
+                document.getElementById('event-text').value = '';
+                document.getElementById('meaning-text').value = '';
+                document.querySelectorAll('.tag').forEach(tag => {
+                    tag.classList.remove('selected');
+                });
+                appState.meaningTags = [];
+            }
+        }
+
+        function changeSettings() {
+            if (confirm('設定を変更しますか？')) {
+                showPage('consent-page');
+            }
+        }
+
+        function goBackToInput() {
+            if (confirm('記録画面に戻りますか？')) {
+                showPage('input-page');
+                appState.currentStep = 2; // Step 2に戻る
+                updateStep();
+            }
         }
 
         function resetInputForm() {
@@ -857,6 +1009,7 @@
             });
 
             updateStep();
+            updateSettingsSummary();
         }
 
         function updateStep() {
@@ -879,6 +1032,7 @@
                 stepIndicator.textContent = 'Step 2 / 2';
                 inputTitle.textContent = 'この出来事をどう意味づけしますか？';
             }
+            updateSettingsSummary(); // ステップ更新時に設定サマリーを更新
         }
 
         function nextStep() {
