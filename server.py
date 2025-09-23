@@ -28,26 +28,8 @@ class MeaningDiversityAnalyzer:
         return sqlite3.connect(self.db_path)
     
     def analyze_event_diversity(self, event_tag=None):
-        """イベントの意味づけ多def run_server(port, host):
-    """サーバーの起動"""
-    server_address = (host, port)
-    httpd = HTTPServer(server_address, MeaningDiversityServer)
-    
-    # Railway用のキープアライブ設定
-    httpd.timeout = None  # タイムアウトを無効化
-    
-    print(f"ことイミ日記サーバーを起動しました")
-    print(f"URL: http://{host}:{port}")
-    print(f"データベース: kotoiminiki.db")
-    print("Ctrl+C で停止できます")
-    
-    try:
-        print("サーバーをキープアライブモードで開始...")
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nサーバーを停止しています...")
-        httpd.server_close()
-        print("サーバーが停止しました")  conn = self.get_connection()
+        """イベントの意味づけ多様性を分析"""
+        conn = self.get_connection()
         cursor = conn.cursor()
         
         try:
@@ -82,6 +64,22 @@ class MeaningDiversityAnalyzer:
             }
         finally:
             conn.close()
+    
+    # Railway用のキープアライブ設定
+    httpd.timeout = None  # タイムアウトを無効化
+    
+    print(f"ことイミ日記サーバーを起動しました")
+    print(f"URL: http://{host}:{port}")
+    print(f"データベース: kotoiminiki.db")
+    print("Ctrl+C で停止できます")
+    
+    try:
+        print("サーバーをキープアライブモードで開始...")
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nサーバーを停止しています...")
+        httpd.server_close()
+        print("サーバーが停止しました")
     
     def compare_solo_vs_social(self, event_tag=None):
         """Solo vs Social モードの比較分析"""
