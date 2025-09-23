@@ -1080,20 +1080,13 @@
 
             // データの保存/送信
             const entryData = {
-                id: 'entry_' + Date.now(),
-                user_id_hash: hashUserId(appState.userId),
-                timestamp: new Date().toISOString(),
-                consent: appState.consent,
-                mode: appState.mode,
-                event_text: appState.eventText,
-                event_tag: appState.eventCategory,
-                meaning_text: appState.meaningText,
-                meaning_tag: appState.meaningTags.join(','),
-                rt_ms: appState.responseTime,
-                saw_alt_meanings: false,
-                changed_after_view: false,
-                quality_flags: generateQualityFlags(),
-                locale: 'ja-JP'
+                event_description: appState.eventText,
+                personal_meaning: appState.meaningText,
+                context_situation: '', // 今後追加予定
+                emotional_response: '', // 今後追加予定
+                event_category: appState.eventCategory,
+                meaning_tags: appState.meaningTags.join(','),
+                mode: appState.mode
             };
 
             if (appState.consent) {
