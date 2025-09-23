@@ -194,11 +194,7 @@
             : '';  // ローカル開発時は相対パス
 
         async function callResearchAPI(type, eventTag = null) {
-            const url = new URL('/research', API_BASE_URL || window.location.origin);
-            url.searchParams.append('type', type);
-            if (eventTag) {
-                url.searchParams.append('event_tag', eventTag);
-            }
+            const url = new URL('/api/analysis', API_BASE_URL || window.location.origin);
             
             const response = await fetch(url);
             if (!response.ok) {
