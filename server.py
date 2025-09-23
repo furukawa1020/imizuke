@@ -195,8 +195,17 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
             # 分布データを返す
             self.handle_fetch_request(parsed_path.query)
         elif path == '/health':
-            # ヘルスチェック
-            self.send_json_response({'status': 'healthy', 'timestamp': datetime.datetime.now().isoformat()})
+            # ヘルスチェック - Railwayが期待する形式
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(b'OK')
+        elif path == '/' and self.headers.get('User-Agent', '').startswith('Railway'):
+            # Railway専用ルートヘルスチェック
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(b'OK')
         elif path == '/research':
             # 研究者向け分析データ
             self.handle_research_request(parsed_path.query)
