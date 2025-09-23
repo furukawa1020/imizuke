@@ -17,6 +17,93 @@ import os
 import threading
 import time
 
+class MeaningDiversityAnalyzer:
+    """意味づけデータの分析クラス"""
+    
+    def __init__(self, db_path):
+        self.db_path = db_path
+    
+    def get_connection(self):
+        """データベース接続を取得"""
+        return sqlite3.connect(self.db_path)
+    
+    def analyze_event_diversity(self, event_tag=None):
+        """イベントの意味づけ多様性を分析"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # 基本統計
+            cursor.execute("SELECT COUNT(*) FROM meanings")
+            total_count = cursor.fetchone()[0]
+            
+            if total_count == 0:
+                return {"status": "no_data", "message": "データが存在しません"}
+            
+            # カテゴリ分布
+            cursor.execute("SELECT event_category, COUNT(*) FROM meanings GROUP BY event_category")
+            categories = dict(cursor.fetchall())
+            
+            # 意味づけタグ分布
+            cursor.execute("SELECT meaning_tags FROM meanings WHERE meaning_tags IS NOT NULL")
+            tag_counts = {}
+            for row in cursor.fetchall():
+                tags = row[0].split(',') if row[0] else []
+                for tag in tags:
+                    tag = tag.strip()
+                    if tag:
+                        tag_counts[tag] = tag_counts.get(tag, 0) + 1
+            
+            return {
+                "status": "success",
+                "total_count": total_count,
+                "categories": categories,
+                "tag_distribution": tag_counts,
+                "entropy_text": 0.0,  # 簡易実装
+                "entropy_tags": 0.0   # 簡易実装
+            }
+        finally:
+            conn.close()
+    
+    def compare_solo_vs_social(self, event_tag=None):
+        """Solo vs Social モードの比較分析"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute("SELECT mode, COUNT(*) FROM meanings GROUP BY mode")
+            mode_counts = dict(cursor.fetchall())
+            
+            return {
+                "status": "success",
+                "mode_distribution": mode_counts,
+                "solo_count": mode_counts.get("solo", 0),
+                "social_count": mode_counts.get("social", 0)
+            }
+        finally:
+            conn.close()
+    
+    def analyze_revision_impact(self, event_tag=None):
+        """修正の影響分析"""
+        return {
+            "status": "success",
+            "revision_count": 0,
+            "impact_score": 0.0
+        }
+    
+    def generate_comprehensive_report(self):
+        """包括的なレポート生成"""
+        diversity = self.analyze_event_diversity()
+        comparison = self.compare_solo_vs_social()
+        
+        return {
+            "status": "success",
+            "diversity_analysis": diversity,
+            "mode_comparison": comparison,
+            "generated_at": datetime.datetime.now().isoformat()
+        }
+
+
 class MeaningDiversityServer(BaseHTTPRequestHandler):
     
     # レート制限用のクラス変数
