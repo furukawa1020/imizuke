@@ -61,25 +61,37 @@ class MeaningDiversityAnalyzer:
         """データベース接続を取得"""
         return sqlite3.connect(self.db_path)
     
-    def analyze_event_diversity(self):
+    def analyze_event_diversity(self, exclude_samples=False):
         """イベントの意味づけ多様性を分析"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         try:
-            # 基本統計
-            cursor.execute("SELECT COUNT(*) FROM meanings")
+            # サンプルデータ除外オプション
+            if exclude_samples:
+                # 今日以降のデータのみ（実ユーザーデータ）
+                cursor.execute("SELECT COUNT(*) FROM meanings WHERE DATE(created_at) >= DATE('now')")
+            else:
+                # 全データ
+                cursor.execute("SELECT COUNT(*) FROM meanings")
+            
             total_count = cursor.fetchone()[0]
             
             if total_count == 0:
                 return {"status": "no_data", "message": "データが存在しません"}
             
             # カテゴリ分布
-            cursor.execute("SELECT event_category, COUNT(*) FROM meanings GROUP BY event_category")
+            if exclude_samples:
+                cursor.execute("SELECT event_category, COUNT(*) FROM meanings WHERE DATE(created_at) >= DATE('now') GROUP BY event_category")
+            else:
+                cursor.execute("SELECT event_category, COUNT(*) FROM meanings GROUP BY event_category")
             categories = dict(cursor.fetchall())
             
             # 意味づけタグ分布
-            cursor.execute("SELECT meaning_tags FROM meanings WHERE meaning_tags IS NOT NULL")
+            if exclude_samples:
+                cursor.execute("SELECT meaning_tags FROM meanings WHERE meaning_tags IS NOT NULL AND DATE(created_at) >= DATE('now')")
+            else:
+                cursor.execute("SELECT meaning_tags FROM meanings WHERE meaning_tags IS NOT NULL")
             tag_counts = {}
             for row in cursor.fetchall():
                 tags = row[0].split(',') if row[0] else []
@@ -92,7 +104,8 @@ class MeaningDiversityAnalyzer:
                 "status": "success",
                 "total_count": total_count,
                 "categories": categories,
-                "tag_distribution": tag_counts
+                "tag_distribution": tag_counts,
+                "data_type": "research_only" if exclude_samples else "all_data"
             }
         finally:
             conn.close()
@@ -175,11 +188,16 @@ class APIHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
             
         elif path == '/api/analysis':
-            # 分析データ取得
+            # 分析データ取得（研究用フィルタ対応）
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
             
-            analysis = self.analyzer.analyze_event_diversity()
+            # クエリパラメータ解析
+            parsed_url = urlparse(self.path)
+            query_params = parse_qs(parsed_url.query)
+            exclude_samples = query_params.get('exclude_samples', ['false'])[0].lower() == 'true'
+            
+            analysis = self.analyzer.analyze_event_diversity(exclude_samples=exclude_samples)
             self.wfile.write(json.dumps(analysis, ensure_ascii=False).encode('utf-8'))
             
         else:

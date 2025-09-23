@@ -193,8 +193,11 @@
             ? 'https://imizuke-production.up.railway.app'  // Railway URL
             : '';  // ローカル開発時は相対パス
 
-        async function callResearchAPI(type, eventTag = null) {
-            const url = new URL('/api/analysis', API_BASE_URL || window.location.origin);
+        async function callResearchAPI(type, eventTag = null, excludeSamples = false) {
+            let url = new URL('/api/analysis', API_BASE_URL || window.location.origin);
+            if (excludeSamples) {
+                url.searchParams.append('exclude_samples', 'true');
+            }
             
             const response = await fetch(url);
             if (!response.ok) {
