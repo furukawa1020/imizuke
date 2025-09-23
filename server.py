@@ -186,8 +186,17 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
         self.send_cors_headers()
         
         if path == '/':
-            # index.html を返す
-            self.serve_static_file('index.html', 'text/html')
+            # Railwayヘルスチェック対応 + index.html
+            user_agent = self.headers.get('User-Agent', '')
+            if 'curl' in user_agent.lower() or 'railway' in user_agent.lower() or self.headers.get('Accept') == 'text/plain':
+                # ヘルスチェックリクエスト
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(b'OK')
+            else:
+                # 通常のブラウザアクセス
+                self.serve_static_file('index.html', 'text/html')
         elif path == '/research_dashboard':
             # 研究者向けダッシュボード
             self.serve_static_file('research_dashboard.html', 'text/html')
