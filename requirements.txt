@@ -1,12 +1,4 @@
-# Pythonの標準ライブラリのみ使用しているため、特別な依存関係なし
-# ただし、Railwayでの互換性のために最小限の設定
+# Python標準ライブラリのみを使用
+# 特別な依存関係は不要ですが、Railwayでの互換性のために記載
 
-# Python標準ライブラリのみ使用
-# http.server
-# sqlite3
-# json
-# urllib.parse
-# re
-# time
-# datetime
-# threading
+# Python 3.8+ が必要

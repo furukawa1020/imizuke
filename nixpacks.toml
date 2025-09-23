@@ -1,0 +1,6 @@
+# nixpacks.toml
+[start]
+cmd = "python server.py"
+
+[variables]
+PORT = "8080"
