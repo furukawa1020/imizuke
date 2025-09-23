@@ -159,6 +159,21 @@ class APIHandler(BaseHTTPRequestHandler):
             response = {"status": "success", "entries": entries}
             self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
             
+        elif path == '/api/clear':
+            # 管理者用：テストデータクリアエンドポイント
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.end_headers()
+            
+            conn = sqlite3.connect(self.db_manager.db_path)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM meanings")
+            cursor.execute("DELETE FROM research_logs")
+            conn.commit()
+            conn.close()
+            
+            response = {"status": "success", "message": "全データをクリアしました"}
+            self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+            
         elif path == '/api/analysis':
             # 分析データ取得
             self.send_header('Content-Type', 'application/json; charset=utf-8')
