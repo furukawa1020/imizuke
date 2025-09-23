@@ -716,13 +716,17 @@ def run_server(port=8000, host='localhost'):
 if __name__ == '__main__':
     import sys
     
-    # コマンドライン引数の処理
-    port = int(os.environ.get('PORT', 8000))  # Railway用の環境変数対応
-    host = '0.0.0.0'  # Railway用にすべてのアドレスでリッスン
+    # Railway環境変数の確実な取得（Railwayはデフォルトで動的ポートを割り当て）
+    port = int(os.environ.get('PORT', 8000))
+    host = '0.0.0.0'  # Railway必須設定  # Railway用にすべてのアドレスでリッスン
+    
+    print(f"Environment PORT: {os.environ.get('PORT', 'Not set')}")
+    print(f"Using port: {port}, host: {host}")
     
     if len(sys.argv) > 1:
         try:
             port = int(sys.argv[1])
+            print(f"Port overridden by command line: {port}")
         except ValueError:
             print("ポート番号は数値で指定してください")
             sys.exit(1)

@@ -5,5 +5,4 @@ builder = "NIXPACKS"
 startCommand = "python server.py"
 
 [variables]
-PORT = "8080"
 PYTHONUNBUFFERED = "1"
