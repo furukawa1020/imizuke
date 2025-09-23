@@ -131,8 +131,8 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
     
     # 設定値
     RATE_LIMIT_REQUESTS = 30  # 1分間あたりの最大リクエスト数
-    RATE_LIMIT_WINDOW = 60    # 時間窓（秒）
-    RATE_LIMIT_BLOCK_TIME = 300  # ブロック時間（秒）
+    RATE_LIMIT_WINDOW = 60    # 時間窓(秒)
+    RATE_LIMIT_BLOCK_TIME = 300  # ブロック時間(秒)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -424,14 +424,14 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
         # JavaScript プロトコルを除去
         sanitized = re.sub(r'javascript:', '', sanitized, flags=re.IGNORECASE)
         
-        # 長すぎる入力を制限（DoS攻撃対策）
+        # 長すぎる入力を制限(DoS攻撃対策)
         if len(sanitized) > 10000:
             sanitized = sanitized[:10000]
         
         return sanitized.strip()
     
     def validate_submission_data(self, data):
-        """送信データのバリデーション（強化版）"""
+        """送信データのバリデーション(強化版)"""
         required_fields = [
             'user_id_hash', 'consent', 'mode', 'event_tag', 
             'meaning_text', 'rt_ms'
@@ -463,7 +463,7 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
         if data['mode'] not in ['solo', 'social']:
             return False
         
-        # event_tag の検証（許可されたタグのみ）
+        # event_tag の検証(許可されたタグのみ)
         allowed_event_tags = [
             'work_late', 'work_praised', 'work_failed', 'work_success', 'work_conflict',
             'relationship_fight', 'relationship_support', 'relationship_betrayal', 
@@ -500,7 +500,7 @@ class MeaningDiversityServer(BaseHTTPRequestHandler):
         )
         quality_flags['duplicate'] = is_duplicate
         
-        # スパム検出（反応時間ベース）
+        # スパム検出(反応時間ベース)
         if data['rt_ms'] < 500:
             quality_flags['spam'] = True
         
