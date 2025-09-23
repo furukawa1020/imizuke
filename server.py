@@ -692,7 +692,7 @@ class DatabaseManager:
         
         return rows_affected > 0
 
-def run_server(port=8000, host='localhost'):
+def run_server(port=8000, host='0.0.0.0'):
     """サーバーの起動"""
     server_address = (host, port)
     httpd = HTTPServer(server_address, MeaningDiversityServer)
