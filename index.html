@@ -1151,7 +1151,7 @@
             submitButton.disabled = true;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/submit`, {
+                const response = await fetch(`${API_BASE_URL}/api/entries`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1251,7 +1251,7 @@
 
         async function fetchDistribution(eventTag) {
             try {
-                const response = await fetch(`${API_BASE_URL}/fetch?event_tag=${eventTag}`);
+                const response = await fetch(`${API_BASE_URL}/api/entries?event_tag=${eventTag}`);
                 if (response.ok) {
                     return await response.json();
                 }
@@ -1334,7 +1334,7 @@
 
         async function submitRevisedToServer(revisionData) {
             try {
-                const response = await fetch(`${API_BASE_URL}/submit`, {
+                const response = await fetch(`${API_BASE_URL}/api/entries`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1357,7 +1357,7 @@
         function updateSawAltMeaningsFlag() {
             if (appState.consent && appState.currentRecordId) {
                 // サーバーに他者データを見たことを通知
-                fetch(`${API_BASE_URL}/update_saw_alt_meanings`, {
+                fetch(`${API_BASE_URL}/api/entries`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
