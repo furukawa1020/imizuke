@@ -718,7 +718,7 @@ if __name__ == '__main__':
     
     # Railway環境変数の確実な取得（Railwayはデフォルトで動的ポートを割り当て）
     port = int(os.environ.get('PORT', 8000))
-    host = '0.0.0.0'  # Railway必須設定  # Railway用にすべてのアドレスでリッスン
+    host = '0.0.0.0'  # Railway必須設定
     
     print(f"Environment PORT: {os.environ.get('PORT', 'Not set')}")
     print(f"Using port: {port}, host: {host}")
