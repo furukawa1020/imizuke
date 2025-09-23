@@ -1,6 +1,6 @@
 # nixpacks.toml
-[start]
-cmd = "python server.py"
+[phases.setup]
+nixPkgs = ["python3"]
 
-[variables]
-PORT = "8080"
+[start]
+cmd = "python3 server.py"
