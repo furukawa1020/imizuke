@@ -3,6 +3,17 @@ builder = "NIXPACKS"
 
 [deploy]
 startCommand = "python server.py"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+
+[variables]
+PORT = "8080"
+PYTHONUNBUFFERED = "1"
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "python server.py"
 
 [variables]
 PORT = "8000"
