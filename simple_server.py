@@ -144,13 +144,29 @@ class APIHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'Railway Server Running - OK')
             
         elif path == '/api/entries':
-            # エントリ一覧取得
+            # エントリ一覧取得（研究用フィルタ対応）
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
             
+            # クエリパラメータ解析
+            parsed_url = urlparse(self.path)
+            query_params = parse_qs(parsed_url.query)
+            exclude_samples = query_params.get('exclude_samples', ['false'])[0].lower() == 'true'
+            
             conn = sqlite3.connect(self.db_manager.db_path)
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM meanings ORDER BY created_at DESC LIMIT 100")
+            
+            # 研究用フィルタリング：サンプルデータ除外
+            if exclude_samples:
+                # 実際のユーザーデータのみ（ASCII範囲外の文字を含む意味のあるデータ）
+                cursor.execute("""
+                    SELECT * FROM meanings 
+                    WHERE (personal_meaning NOT LIKE '%?%' OR personal_meaning LIKE '%予稿%' OR personal_meaning LIKE '%15分%')
+                    ORDER BY created_at DESC LIMIT 100
+                """)
+            else:
+                cursor.execute("SELECT * FROM meanings ORDER BY created_at DESC LIMIT 100")
+            
             rows = cursor.fetchall()
             
             entries = []
@@ -169,7 +185,12 @@ class APIHandler(BaseHTTPRequestHandler):
             
             conn.close()
             
-            response = {"status": "success", "entries": entries}
+            response = {
+                "status": "success", 
+                "entries": entries,
+                "data_type": "research_only" if exclude_samples else "all_data",
+                "total_entries": len(entries)
+            }
             self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
             
         elif path == '/api/clear':
