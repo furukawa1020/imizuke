@@ -1244,7 +1244,7 @@
 
         async function fetchDistribution(eventTag) {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/entries?event_tag=${eventTag}`);
+                const response = await fetch(`${API_BASE_URL}/api/analysis?event_category=${eventTag}`);
                 if (response.ok) {
                     return await response.json();
                 }
